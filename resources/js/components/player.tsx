@@ -341,6 +341,13 @@ export function Player({
                     fragLoadingTimeOut: 90_000,
                     maxBufferLength: 30,
                     maxMaxBufferLength: 90,
+                    // Не отбрасывать HDR-варианты: иначе на экране без HDR
+                    // hls.js оставит только SDR — а это у Jellyfin запасной
+                    // вариант с полным перекодированием 4K в H.264.
+                    videoPreference: {
+                        preferHDR: true,
+                        allowedVideoRanges: ['SDR', 'PQ', 'HLG'],
+                    },
                 });
                 hls.on(HlsJs.Events.ERROR, (_, data) => {
                     if (!data.fatal) return;
@@ -355,6 +362,25 @@ export function Player({
                     setError(
                         'Поток прервался. Сервер мог не справиться с перекодированием.',
                     );
+                });
+                // У HDR-фильма Jellyfin кладёт в master два варианта: основной
+                // (видео копируется, кодеки как в адресе потока) и запасной
+                // H.264 SDR. Закрепляем основной; если браузер его не тянет,
+                // hls.js сам уберёт его из списка и останется запасной.
+                const wanted = new URL(source.url).searchParams.get(
+                    'VideoCodec',
+                );
+                hls.on(HlsJs.Events.MANIFEST_PARSED, (_, data) => {
+                    const index = data.levels.findIndex(
+                        (level) =>
+                            new URL(level.uri, source.url).searchParams.get(
+                                'VideoCodec',
+                            ) === wanted,
+                    );
+                    if (index !== -1 && hls) {
+                        hls.startLevel = index;
+                        hls.currentLevel = index;
+                    }
                 });
                 hls.loadSource(source.url);
                 hls.attachMedia(media);
