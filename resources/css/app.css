@@ -1,0 +1,186 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@source '../views';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter',
+        'Segoe UI Variable', 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display:
+        -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter',
+        'Segoe UI Variable Display', 'Segoe UI', Roboto, 'Helvetica Neue',
+        Arial, sans-serif;
+
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-brand: var(--brand);
+    --color-brand-foreground: var(--brand-foreground);
+    --color-chrome: var(--chrome);
+
+    --animate-fade-in: fade-in 0.4s ease-out both;
+    --animate-bezel: bezel 0.6s ease-out both;
+    --animate-ken-burns: ken-burns 24s ease-out both;
+    --animate-hero-in: hero-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    --animate-hero-backdrop: hero-backdrop 12s cubic-bezier(0.22, 1, 0.36, 1)
+        both;
+    --animate-progress: progress linear both;
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @keyframes bezel {
+        from {
+            opacity: 1;
+            transform: scale(0.85);
+        }
+        to {
+            opacity: 0;
+            transform: scale(1.25);
+        }
+    }
+
+    /* Витрина: текст слайда проявляется из размытия снизу вверх. */
+    @keyframes hero-in {
+        from {
+            opacity: 0;
+            transform: translateY(28px);
+            filter: blur(10px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+            filter: blur(0);
+        }
+    }
+
+    /* Фон слайда въезжает со стороны, куда листают, и медленно оседает. */
+    @keyframes hero-backdrop {
+        from {
+            transform: scale(1.14) translateX(var(--hero-shift, 0));
+        }
+        to {
+            transform: scale(1.02) translateX(0);
+        }
+    }
+
+    /* Полоса времени слайда; конец анимации листает дальше. */
+    @keyframes progress {
+        from {
+            transform: scaleX(0);
+        }
+        to {
+            transform: scaleX(1);
+        }
+    }
+
+    /* Витрина на главной: фон медленно наезжает, как в Apple TV. */
+    @keyframes ken-burns {
+        from {
+            transform: scale(1.08);
+        }
+        to {
+            transform: scale(1);
+        }
+    }
+}
+
+/*
+ * Только тёмная тема: кино смотрят в темноте, а постеры и кадры на
+ * почти чёрном выглядят как в кинотеатре. Акцент — фиолетовый Jellyfin.
+ */
+:root {
+    --radius: 0.75rem;
+    --background: oklch(0.13 0.006 286);
+    --foreground: oklch(0.97 0 0);
+    --card: oklch(0.18 0.007 286);
+    --card-foreground: oklch(0.97 0 0);
+    --popover: oklch(0.2 0.008 286);
+    --popover-foreground: oklch(0.97 0 0);
+    --primary: oklch(0.97 0 0);
+    --primary-foreground: oklch(0.16 0.005 286);
+    --secondary: oklch(0.24 0.008 286);
+    --secondary-foreground: oklch(0.97 0 0);
+    --muted: oklch(0.22 0.008 286);
+    --muted-foreground: oklch(0.7 0.012 286);
+    --accent: oklch(0.26 0.009 286);
+    --accent-foreground: oklch(0.97 0 0);
+    --destructive: oklch(0.62 0.21 25);
+    --destructive-foreground: oklch(0.985 0 0);
+    --border: oklch(1 0 0 / 0.09);
+    --input: oklch(1 0 0 / 0.12);
+    --ring: oklch(0.68 0.17 300);
+    --brand: oklch(0.68 0.17 300);
+    --brand-foreground: oklch(0.99 0 0);
+    --chrome: oklch(0.13 0.006 286 / 0.72);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    html {
+        color-scheme: dark;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: 'cv11', 'ss01';
+    }
+
+    ::selection {
+        background: color-mix(in oklch, var(--brand) 40%, transparent);
+    }
+}
+
+@utility scrollbar-none {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@utility font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+}
+
+@utility pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}

@@ -1,0 +1,56 @@
+# Кинотека (веб-клиент Jellyfin) — стек Dokploy (тип Compose, источник Raw).
+#
+#   web   Laravel + nginx; домен — во вкладке Domains стека (порт 8080)
+#
+# Порт наружу не публикуется: клиент открывается через домен в Dokploy.
+# Видео и изображения браузер получает напрямую от Jellyfin
+# (JELLYFIN_PUBLIC_URL), через контейнер идут только страницы и запросы плеера.
+#
+# Данные на хосте (владелец — www-data, uid/gid 33:33):
+#   /srv/jellyfin-web/state/database   база SQLite: сессии и кеш
+#
+# Jellyfin установлен на том же хосте (порт 8096): Laravel обращается к нему
+# через шлюз Docker (host.docker.internal), браузер — по JELLYFIN_PUBLIC_URL.
+
+services:
+    web:
+        image: ghcr.io/kamabyte/jellyfin-web:${IMAGE_TAG:-latest}
+        pull_policy: always
+        restart: unless-stopped
+        environment:
+            APP_NAME: Кинотека
+            APP_ENV: production
+            APP_DEBUG: 'false'
+            APP_KEY: ${APP_KEY:?задайте APP_KEY во вкладке Environment}
+            APP_URL: ${APP_URL:?задайте APP_URL во вкладке Environment}
+            APP_LOCALE: ru
+            APP_FALLBACK_LOCALE: ru
+            LOG_CHANNEL: stderr
+            LOG_LEVEL: warning
+            DB_CONNECTION: sqlite
+            DB_DATABASE: /state/database/database.sqlite
+            # Вход хранится месяц: токен Jellyfin действует, пока его не отзовут.
+            SESSION_DRIVER: database
+            SESSION_LIFETIME: '43200'
+            CACHE_STORE: database
+            QUEUE_CONNECTION: sync
+            JELLYFIN_URL: ${JELLYFIN_URL:-http://host.docker.internal:8096}
+            JELLYFIN_PUBLIC_URL: ${JELLYFIN_PUBLIC_URL:?задайте JELLYFIN_PUBLIC_URL — адрес Jellyfin для браузера}
+            # Миграции и кеши Laravel при старте (автоматизация образа).
+            AUTORUN_ENABLED: 'true'
+            AUTORUN_LARAVEL_MIGRATION_ISOLATION: 'false'
+        extra_hosts:
+            - host.docker.internal:host-gateway
+        volumes:
+            - type: bind
+              source: /srv/jellyfin-web/state/database
+              target: /state/database
+              bind: { create_host_path: false }
+        networks: [default, dokploy-network]
+        deploy:
+            resources:
+                limits: { cpus: '1', memory: 512m }
+
+networks:
+    dokploy-network:
+        external: true
