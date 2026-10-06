@@ -13,6 +13,7 @@ use App\Jellyfin\PlaybackUnavailable;
 use App\Jellyfin\Ticks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * JSON для плеера: откуда брать поток и отчёты о просмотре.
@@ -56,6 +57,25 @@ class PlaybackController extends Controller
             $source = PlaybackSource::fromPlaybackInfo($item, $info, $user->token, $user->deviceId, $request->burnSubtitleIndex());
         } catch (PlaybackUnavailable $e) {
             return response()->json(['message' => $this->reason($e->getMessage())], 422);
+        }
+
+        // Перекодирование видео на слабом сервере — событие: 4K так не
+        // потянуть. Пишем, что сообщил браузер и почему решил сервер.
+        if ($source->transcodesVideo()) {
+            Log::warning('Jellyfin перекодирует видео', [
+                'item' => $item,
+                'reasons' => $source->reasons,
+                'url' => preg_replace('/([?&])ApiKey=[^&]*/', '$1ApiKey=…', parse_url($source->url, PHP_URL_PATH).'?'.parse_url($source->url, PHP_URL_QUERY)),
+                'browser' => [
+                    'codecs' => $request->codecs(),
+                    'containers' => $request->containers(),
+                    'dolbyVision' => $request->dolbyVision(),
+                    'directPlay' => $request->directPlay(),
+                    'audio' => $request->audioStreamIndex(),
+                    'burnSubtitle' => $request->burnSubtitleIndex(),
+                    'userAgent' => $request->userAgent(),
+                ],
+            ]);
         }
 
         return response()->json($source->toArray());
