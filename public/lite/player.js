@@ -1215,7 +1215,9 @@
 
     function methodLabel(source) {
         if (source.method === 'DirectPlay') return 'Файл как есть';
-        return source.transcodesVideo ? 'Перекодирование' : 'Перепаковка без пережатия';
+        if (source.transcodesVideo) return 'Перекодирование';
+        // AC-3/E-AC-3 iPad не декодирует — звук пережимается в AAC, видео копируется.
+        return source.reasons.indexOf('AudioCodecNotSupported') !== -1 ? 'Перепаковка, звук в AAC' : 'Перепаковка без пережатия';
     }
 
     function speedLabel(rate) {
@@ -1504,7 +1506,8 @@
         toggleClass(root, 'player--hide-bottom', !(controls && state.countdown === null));
         toggleClass(root, 'player--controls', controls && state.countdown === null);
 
-        show(el.loading, isLoading || (state.waiting && !state.paused));
+        // При смене дорожки свой индикатор — большой круг поверх него не нужен.
+        show(el.loading, !state.switching && (isLoading || (state.waiting && !state.paused)));
         show(el.transcodeNote, isLoading && !!source && source.transcodesVideo);
         show(el.blocked, state.blocked && !state.error);
 
@@ -1521,7 +1524,8 @@
         show(el.pip, canPip());
         show(el.airplay, state.airplay);
 
-        var badge = source && state.started && source.method !== 'DirectPlay' && controls;
+        // Под панелью «Серии» плашка просвечивает рядом с крестиком — прячем.
+        var badge = source && state.started && source.method !== 'DirectPlay' && controls && !state.episodesOpen;
         show(el.method, badge);
         if (badge) el.method.textContent = methodLabel(source);
 

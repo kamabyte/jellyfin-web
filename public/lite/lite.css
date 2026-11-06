@@ -2894,6 +2894,8 @@ ul {
     .person-head__photo { width: 192px; padding-top: 288px; }
     .player__top { padding: 24px 32px 80px; }
     .player__bottom { padding: 64px 28px 20px; }
+    /* Панель внизу здесь выше — меню над полосой прогресса, а не на ней. */
+    .menu { bottom: 100px; right: 20px; }
     .player__offer { right: 32px; }
     .player__resumed { top: 96px; left: 32px; }
     .player__cue-text { font-size: 32px; }

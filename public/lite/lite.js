@@ -100,7 +100,9 @@
         if (hidden) button.removeAttribute('hidden');
         var display = getComputedStyle(button).display;
         if (hidden) button.setAttribute('hidden', '');
-        return display.indexOf('flex') !== -1 || display.indexOf('box') !== -1;
+        // Только flex: -webkit-box (раскрываемое описание с line-clamp)
+        // в старом WebKit работает и на кнопке, а обёртка ломает обрезку строк.
+        return display.indexOf('flex') !== -1;
     }
 
     function wrapButton(button) {
@@ -199,6 +201,7 @@
             dropdown.className = open
                 ? dropdown.className.replace(/\s*dropdown--open/g, '')
                 : dropdown.className + ' dropdown--open';
+            if (!open) keepInside(dropdown.querySelector('.dropdown__menu'));
             return;
         }
         if (!closest(event.target, '.dropdown__menu')) closeDropdowns(null);
@@ -216,9 +219,26 @@
             : expand.className + ' clamp-4';
     });
 
+    // Меню у правого края экрана (кнопка «⋯» у фильма) уходило за край —
+    // тогда выравниваем его по правому краю кнопки.
+    function keepInside(menu) {
+        if (!menu || /dropdown__menu--right/.test(menu.className)) return;
+        if (menu.getBoundingClientRect().right > window.innerWidth - 8) menu.className += ' dropdown__menu--right';
+    }
+
     // На iOS касание пустого места не даёт click — закрываем меню по касанию.
     document.addEventListener('touchstart', function (event) {
         if (!closest(event.target, '[data-dropdown]')) closeDropdowns(null);
+    });
+
+    // ---------- Разделы в шапке ----------
+
+    // Разделов больше, чем влезает, — текущий может оказаться за краем.
+    each(all('.nav'), function (nav) {
+        var active = nav.querySelector('.nav__link--active');
+        if (!active) return;
+        var overflow = active.getBoundingClientRect().right + 32 - nav.getBoundingClientRect().right;
+        if (overflow > 0) nav.scrollLeft += overflow;
     });
 
     // ---------- Шапка поверх фона ----------
