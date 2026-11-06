@@ -17,6 +17,22 @@
     display: none !important;
 }
 
+/* Содержимое кнопки-флекса в старом WebKit (lite.js): раскладку берёт у кнопки. */
+.btn-flex {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: inherit;
+    flex-direction: inherit;
+    -webkit-flex-wrap: inherit;
+    flex-wrap: inherit;
+    -webkit-align-items: inherit;
+    align-items: inherit;
+    -webkit-justify-content: inherit;
+    justify-content: inherit;
+    width: 100%;
+    min-width: 0;
+}
+
 html {
     background: #070709;
     -webkit-text-size-adjust: 100%;
@@ -410,6 +426,9 @@ ul {
     overflow-x: auto;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
+    /* Не влезшие разделы уходят под край — край гаснет, видно, что дальше ещё есть. */
+    -webkit-mask-image: -webkit-linear-gradient(right, transparent, #000 32px);
+    -webkit-mask-image: linear-gradient(to left, transparent, #000 32px);
 }
 
 .nav::-webkit-scrollbar {
@@ -773,6 +792,8 @@ ul {
     line-height: 1.6;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+    /* iOS 10 здесь line-clamp не применяет — режем по высоте трёх строк. */
+    max-height: 4.8em;
 }
 
 .hero__controls {
@@ -2481,7 +2502,7 @@ ul {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.menu__row > .icon:first-child {
+.menu__row .icon:first-child {
     margin-right: 12px;
 }
 

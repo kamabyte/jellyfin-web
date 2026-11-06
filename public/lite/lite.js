@@ -78,6 +78,61 @@
         }
     }
 
+    // ---------- Кнопки-флексы (Safari до 11) ----------
+
+    // Старый WebKit не делает <button> флекс-контейнером: display: flex на
+    // кнопке не действует, иконка и подпись прижимаются влево. Содержимое
+    // таких кнопок переносим в <span class="btn-flex">, который берёт
+    // раскладку кнопки (lite.css). Кнопки плеера появляются позже — их
+    // ловит MutationObserver.
+    function buttonFlexBroken() {
+        var button = document.createElement('button');
+        button.style.cssText = 'display:flex;justify-content:center;width:100px;padding:0;border:0';
+        button.innerHTML = '<span style="width:10px"></span>';
+        document.body.appendChild(button);
+        var offset = button.firstChild.getBoundingClientRect().left - button.getBoundingClientRect().left;
+        document.body.removeChild(button);
+        return offset < 1;
+    }
+
+    function isFlex(button) {
+        var hidden = button.hasAttribute('hidden');
+        if (hidden) button.removeAttribute('hidden');
+        var display = getComputedStyle(button).display;
+        if (hidden) button.setAttribute('hidden', '');
+        return display.indexOf('flex') !== -1 || display.indexOf('box') !== -1;
+    }
+
+    function wrapButton(button) {
+        var first = button.firstChild;
+        if (first && first === button.lastChild && first.className === 'btn-flex') return;
+        if (!first || !isFlex(button)) return;
+        var inner = document.createElement('span');
+        inner.className = 'btn-flex';
+        while (button.firstChild) inner.appendChild(button.firstChild);
+        button.appendChild(inner);
+    }
+
+    function wrapButtons(node) {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === 'BUTTON') wrapButton(node);
+        else each(all('button', node), wrapButton);
+    }
+
+    if (buttonFlexBroken()) {
+        wrapButtons(document.body);
+        if (window.MutationObserver) {
+            new MutationObserver(function (mutations) {
+                each(mutations, function (mutation) {
+                    // Содержимое кнопки заменили целиком — обернуть заново.
+                    var button = closest(mutation.target, 'button');
+                    if (button) wrapButton(button);
+                    each(mutation.addedNodes, wrapButtons);
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
     // ---------- Ленивые картинки ----------
     // Сетка медиатеки — сотни постеров; старому iPad их не удержать разом.
 
