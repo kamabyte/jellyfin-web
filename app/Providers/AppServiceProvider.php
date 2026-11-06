@@ -7,6 +7,7 @@ use App\Jellyfin\DeviceId;
 use App\Jellyfin\Jellyfin;
 use App\Jellyfin\JellyfinUser;
 use App\Jellyfin\SessionUserProvider;
+use App\Lite\ResponseFactory as LiteResponseFactory;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Inertia\ResponseFactory;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
                 user: $user,
             );
         });
+
+        // Облегчённой версии страница нужна целиком, с отложенными пропсами.
+        $this->app->singleton(ResponseFactory::class, LiteResponseFactory::class);
     }
 
     /**

@@ -23,9 +23,10 @@ final class DeviceProfile
     /**
      * @param  list<string>  $codecs  что декодирует браузер
      * @param  list<string>  $containers  что он открывает напрямую
+     * @param  int|null  $maxWidth  предел декодера (старый iPad — 1080p): шире — пережать
      * @return array<string, mixed>
      */
-    public static function build(array $codecs, array $containers, bool $dolbyVision, int $maxBitrate, bool $audioTrackSwitching = false): array
+    public static function build(array $codecs, array $containers, bool $dolbyVision, int $maxBitrate, bool $audioTrackSwitching = false, ?int $maxWidth = null): array
     {
         $video = array_values(array_intersect(self::VIDEO_CODECS, $codecs));
         $audio = array_values(array_intersect(self::AUDIO_CODECS, $codecs));
@@ -80,7 +81,7 @@ final class DeviceProfile
                 'BreakOnNonKeyFrames' => true,
             ]],
             'ContainerProfiles' => [],
-            'CodecProfiles' => self::codecProfiles($dolbyVision, $audioTrackSwitching),
+            'CodecProfiles' => self::codecProfiles($dolbyVision, $audioTrackSwitching, $maxWidth),
             // Текстовые субтитры — отдельным VTT; картинки (PGS, VobSub)
             // браузер не покажет, их сервер может только вшить в видео.
             'SubtitleProfiles' => [
@@ -92,7 +93,7 @@ final class DeviceProfile
     /**
      * @return list<array<string, mixed>>
      */
-    private static function codecProfiles(bool $dolbyVision, bool $audioTrackSwitching): array
+    private static function codecProfiles(bool $dolbyVision, bool $audioTrackSwitching, ?int $maxWidth): array
     {
         // Чистый Dolby Vision (профиль 5) без HDR10-слоя вне Safari даёт
         // зелёно-фиолетовую картинку — такое только пережимать.
@@ -128,6 +129,17 @@ final class DeviceProfile
                 'Type' => 'VideoAudio',
                 'Conditions' => [
                     ['Condition' => 'Equals', 'Property' => 'IsSecondaryAudio', 'Value' => 'false', 'IsRequired' => false],
+                ],
+            ];
+        }
+
+        // Профиль без кодека — для любого видео. При перекодировании Jellyfin
+        // по этому же условию уменьшает кадр.
+        if ($maxWidth !== null) {
+            $profiles[] = [
+                'Type' => 'Video',
+                'Conditions' => [
+                    ['Condition' => 'LessThanEqual', 'Property' => 'Width', 'Value' => (string) $maxWidth, 'IsRequired' => false],
                 ],
             ];
         }

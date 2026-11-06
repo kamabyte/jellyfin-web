@@ -33,6 +33,7 @@ class PlaybackController extends Controller
                 $request->dolbyVision(),
                 $maxBitrate,
                 $request->audioTrackSwitching(),
+                $request->maxWidth(),
             ),
             'MaxStreamingBitrate' => $maxBitrate,
             'StartTimeTicks' => Ticks::fromSeconds($request->startAt()),
@@ -73,6 +74,7 @@ class PlaybackController extends Controller
                     'directPlay' => $request->directPlay(),
                     'audio' => $request->audioStreamIndex(),
                     'burnSubtitle' => $request->burnSubtitleIndex(),
+                    'maxWidth' => $request->maxWidth(),
                     'userAgent' => $request->userAgent(),
                 ],
             ]);

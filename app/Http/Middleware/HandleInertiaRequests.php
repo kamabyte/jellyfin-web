@@ -7,6 +7,7 @@ use App\Jellyfin\BuiltInClient;
 use App\Jellyfin\Image;
 use App\Jellyfin\Jellyfin;
 use App\Jellyfin\JellyfinUser;
+use App\Lite\Lite;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Middleware;
@@ -19,6 +20,14 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    /**
+     * Старым браузерам — облегчённая версия на Blade (App\Lite\Lite).
+     */
+    public function rootView(Request $request): string
+    {
+        return Lite::active($request) ? 'lite.app' : $this->rootView;
+    }
 
     /**
      * @return array<string, mixed>

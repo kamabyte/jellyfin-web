@@ -12,6 +12,18 @@
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
+        {{-- Старый браузер (iPad на iOS 10 и т. п.) этот клиент не запустит:
+             сборке и Tailwind v4 нужен Safari 16.4+. Ему — облегчённая
+             версия (App\Lite\Lite): кука и перезагрузка. --}}
+        <script>
+            (function () {
+                var css = window.CSS;
+                if (css && css.supports && css.supports('color', 'color-mix(in srgb, red, red)')) return;
+                document.cookie = 'lite=1; path=/; max-age=157680000';
+                if (/(^|; )lite=1/.test(document.cookie)) location.reload();
+            })();
+        </script>
+
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>

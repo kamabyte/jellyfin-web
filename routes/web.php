@@ -5,6 +5,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\LiteModeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PlaybackController;
 use App\Http\Controllers\PlayedController;
@@ -15,6 +16,9 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\WatchController;
 use App\Jellyfin\BuiltInClient;
 use Illuminate\Support\Facades\Route;
+
+// Облегчённая версия для старых браузеров: включить или вернуться к основной.
+Route::get('lite/{state}', LiteModeController::class)->whereIn('state', ['on', 'off'])->name('lite');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');

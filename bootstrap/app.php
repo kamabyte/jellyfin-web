@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Jellyfin\JellyfinUnavailable;
+use App\Lite\Lite;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         $middleware->redirectUsersTo('/');
+
+        // Куку облегчённой версии ставит и скрипт в app.blade.php — без шифрования.
+        $middleware->encryptCookies(except: [Lite::COOKIE]);
 
         $middleware->web(append: [
             HandleInertiaRequests::class,

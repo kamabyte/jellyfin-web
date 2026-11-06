@@ -52,6 +52,9 @@ export default defineConfig({
         ignorePatterns: [
             '.github/**',
             'composer.json',
+            // Облегчённая версия — ES5 руками, для Safari 10: форматтер
+            // добавил бы запятые в вызовах (ES2017).
+            'public/lite/**',
             'resources/js/components/ui/*',
         ],
         sortTailwindcss: {

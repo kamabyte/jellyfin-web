@@ -25,6 +25,7 @@ class PlaybackRequest extends FormRequest
             'dolbyVision' => ['boolean'],
             'directPlay' => ['boolean'],
             'audioTrackSwitching' => ['boolean'],
+            'maxWidth' => ['nullable', 'integer', 'min:320', 'max:8192'],
             'startAt' => ['nullable', 'numeric', 'min:0'],
             'mediaSourceId' => ['nullable', 'string', 'max:64'],
             'audioStreamIndex' => ['nullable', 'integer', 'min:0'],
@@ -75,6 +76,15 @@ class PlaybackRequest extends FormRequest
     public function audioTrackSwitching(): bool
     {
         return $this->boolean('audioTrackSwitching');
+    }
+
+    /**
+     * Шире какого кадра браузер не декодирует (облегчённая версия: старые
+     * iPad тянут только 1080p). null — без предела.
+     */
+    public function maxWidth(): ?int
+    {
+        return $this->filled('maxWidth') ? $this->integer('maxWidth') : null;
     }
 
     public function startAt(): float
