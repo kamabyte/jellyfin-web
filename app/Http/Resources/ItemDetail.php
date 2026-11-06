@@ -37,7 +37,6 @@ class ItemDetail extends ItemCard
             'criticRating' => $item['CriticRating'] ?? null,
             'premiereDate' => $item['PremiereDate'] ?? null,
             'status' => $item['Status'] ?? null,
-            'seriesId' => $item['SeriesId'] ?? null,
             'seasonId' => $item['SeasonId'] ?? null,
             'parentId' => $item['ParentId'] ?? null,
             'resumeAt' => Ticks::toSeconds(data_get($item, 'UserData.PlaybackPositionTicks')) ?: null,

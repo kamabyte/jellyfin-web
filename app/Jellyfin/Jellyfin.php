@@ -335,6 +335,18 @@ class Jellyfin
     }
 
     /**
+     * Убрать из «Продолжить просмотр»: сбросить только позицию — отметка
+     * «просмотрено» и счётчик просмотров остаются. Во встроенном клиенте
+     * так нельзя, там только «отметить просмотренным».
+     *
+     * @return array<string, mixed> новые UserData
+     */
+    public function clearResume(string $id): array
+    {
+        return $this->post("/UserItems/{$id}/UserData?userId={$this->userId()}", ['PlaybackPositionTicks' => 0]);
+    }
+
+    /**
      * @return array<string, mixed> новые UserData
      */
     public function setFavorite(string $id, bool $favorite): array

@@ -1,4 +1,5 @@
 import { Deferred, Head } from '@inertiajs/react';
+import { ContinueMenu } from '@/components/continue-menu';
 import { Hero } from '@/components/hero';
 import {
     LandscapeCard,
@@ -61,6 +62,7 @@ export default function Home({
                                 key={item.id}
                                 item={item}
                                 play
+                                menu={<ContinueMenu item={item} resume />}
                                 className={SHELF_LANDSCAPE}
                             />
                         ))}
@@ -74,6 +76,7 @@ export default function Home({
                                 key={item.id}
                                 item={item}
                                 play
+                                menu={<ContinueMenu item={item} />}
                                 className={SHELF_LANDSCAPE}
                             />
                         ))}

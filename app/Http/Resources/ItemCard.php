@@ -29,6 +29,7 @@ class ItemCard extends JsonResource
             'name' => (string) $item['Name'],
             'year' => $item['ProductionYear'] ?? null,
             'endYear' => isset($item['EndDate']) ? (int) substr((string) $item['EndDate'], 0, 4) : null,
+            'seriesId' => $item['SeriesId'] ?? null,
             'seriesName' => $item['SeriesName'] ?? null,
             'season' => $item['ParentIndexNumber'] ?? null,
             'episode' => $item['IndexNumber'] ?? null,

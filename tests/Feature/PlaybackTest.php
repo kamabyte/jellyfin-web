@@ -81,6 +81,31 @@ it('plays the next episode across a season boundary', function (): void {
         ->assertInertia(fn (Assert $page) => $page->where('next.id', 'ep-2-1'));
 });
 
+it('lists the seasons and episodes of a series for the player', function (): void {
+    Http::fake([
+        'jellyfin.test/Shows/series-1/Seasons*' => Http::response(jfList([
+            jfItem('season-1', 'Season', ['UserData' => ['Played' => true]]),
+            jfItem('season-2', 'Season'),
+        ])),
+        'jellyfin.test/Shows/series-1/Episodes*' => Http::response(jfList([
+            jfItem('ep-2-1', 'Episode', ['ParentIndexNumber' => 2, 'IndexNumber' => 1, 'Overview' => 'Начало']),
+        ])),
+    ]);
+
+    $this->getJson('/series/series-1/episodes?season=season-2')
+        ->assertOk()
+        ->assertJsonPath('seasonId', 'season-2')
+        ->assertJsonPath('seasons.0.played', true)
+        ->assertJsonPath('episodes.0.id', 'ep-2-1')
+        ->assertJsonPath('episodes.0.episode', 1);
+
+    // Неизвестный сезон — первый.
+    $this->getJson('/series/series-1/episodes?season=nope')->assertJsonPath('seasonId', 'season-1');
+
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/Shows/series-1/Episodes?')
+        && str_contains($request->url(), 'seasonId=season-2'));
+});
+
 it('starts a series from its next episode', function (): void {
     Http::fake([
         'jellyfin.test/Items/series-1*' => Http::response(jfItem('series-1', 'Series')),

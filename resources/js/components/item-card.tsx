@@ -1,6 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { Check, Film, Folder, Play, User } from 'lucide-react';
-import { useState } from 'react';
+import { Check, Film, Folder, MoreVertical, Play, User } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { episodeLabel, formatRemaining, yearRange } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { watch } from '@/routes';
@@ -145,15 +150,18 @@ export function PosterCard({
 
 /**
  * Горизонтальная карточка 16:9: «Продолжить просмотр», серии, видео из
- * папок. С play — по клику сразу плеер.
+ * папок. С play — по клику сразу плеер; menu — пункты меню «⋮» рядом с
+ * названием (на сенсорном экране видно всегда, мышью — при наведении).
  */
 export function LandscapeCard({
     item,
     play = false,
+    menu,
     className,
 }: {
     item: Item;
     play?: boolean;
+    menu?: ReactNode;
     className?: string;
 }) {
     const title =
@@ -166,34 +174,52 @@ export function LandscapeCard({
             : formatRemaining(item) || yearRange(item);
 
     return (
-        <Link
-            href={itemHref(item, play)}
-            prefetch={!play}
-            className={cn('group block outline-none', className)}
-        >
-            <div className="relative overflow-hidden rounded-xl shadow-lg ring-1 shadow-black/30 ring-white/10 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:ring-white/30 group-focus-visible:ring-2 group-focus-visible:ring-ring">
-                <Artwork
-                    src={item.landscape ?? item.poster}
-                    item={item}
-                    className="aspect-video"
-                />
-                {play && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
-                        <span className="flex size-12 scale-90 items-center justify-center rounded-full bg-white/90 text-black opacity-0 shadow-lg transition group-hover:scale-100 group-hover:opacity-100">
-                            <Play className="ml-0.5 size-5 fill-current" />
-                        </span>
-                    </div>
-                )}
-                <Badges item={item} />
-                <ProgressLine progress={item.progress} />
-            </div>
-            <div className="mt-2.5 px-0.5">
-                <div className="truncate text-sm font-medium">{title}</div>
-                <div className="truncate text-xs text-muted-foreground">
-                    {caption || ' '}
+        <div className={cn('group/card relative', className)}>
+            <Link
+                href={itemHref(item, play)}
+                prefetch={!play}
+                className="group block outline-none"
+            >
+                <div className="relative overflow-hidden rounded-xl shadow-lg ring-1 shadow-black/30 ring-white/10 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:ring-white/30 group-focus-visible:ring-2 group-focus-visible:ring-ring">
+                    <Artwork
+                        src={item.landscape ?? item.poster}
+                        item={item}
+                        className="aspect-video"
+                    />
+                    {play && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
+                            <span className="flex size-12 scale-90 items-center justify-center rounded-full bg-white/90 text-black opacity-0 shadow-lg transition group-hover:scale-100 group-hover:opacity-100">
+                                <Play className="ml-0.5 size-5 fill-current" />
+                            </span>
+                        </div>
+                    )}
+                    <Badges item={item} />
+                    <ProgressLine progress={item.progress} />
                 </div>
-            </div>
-        </Link>
+                <div className={cn('mt-2.5 px-0.5', menu && 'pr-8')}>
+                    <div className="truncate text-sm font-medium">{title}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                        {caption || ' '}
+                    </div>
+                </div>
+            </Link>
+            {menu && (
+                <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            aria-label="Действия"
+                            className="absolute -right-1.5 bottom-0.5 inline-flex size-8 items-center justify-center rounded-full text-muted-foreground opacity-0 transition outline-none group-hover/card:opacity-100 hover:bg-white/10 hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-white/10 data-[state=open]:text-foreground data-[state=open]:opacity-100 pointer-coarse:opacity-100"
+                        >
+                            <MoreVertical className="size-4" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-60">
+                        {menu}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
+        </div>
     );
 }
 

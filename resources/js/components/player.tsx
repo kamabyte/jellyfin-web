@@ -1,10 +1,12 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import type Hls from 'hls.js';
 import {
     Airplay,
     ArrowLeft,
     Captions,
+    ChevronRight,
     FastForward,
+    ListVideo,
     LoaderCircle,
     Maximize,
     Minimize,
@@ -33,6 +35,7 @@ import { capabilities } from '@/lib/capabilities';
 import { episodeLabel, formatDuration } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { watch } from '@/routes';
+import items from '@/routes/items';
 import playback from '@/routes/playback';
 import type {
     Episode,
@@ -42,6 +45,7 @@ import type {
     Trickplay,
 } from '@/types';
 import { ControlButton } from './player/control-button';
+import { EpisodesPanel } from './player/episodes-panel';
 import { ProgressBar } from './player/progress-bar';
 import { methodLabel, SettingsMenu, SPEEDS } from './player/settings-menu';
 import { VolumeControl } from './player/volume-control';
@@ -219,6 +223,8 @@ export function Player({
     const [active, setActive] = useState(true);
     const [overControls, setOverControls] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [episodesOpen, setEpisodesOpen] = useState(false);
+    const closeEpisodes = useCallback(() => setEpisodesOpen(false), []);
     const [scrubbing, setScrubbing] = useState(false);
     const [bezel, setBezel] = useState<Bezel | null>(null);
 
@@ -228,7 +234,12 @@ export function Player({
     const loading = !started && !blocked && !error;
     const showControls =
         !loading &&
-        (active || paused || overControls || settingsOpen || scrubbing);
+        (active ||
+            paused ||
+            overControls ||
+            settingsOpen ||
+            episodesOpen ||
+            scrubbing);
 
     const attach = useCallback((el: HTMLVideoElement | null) => {
         ref.current = el;
@@ -810,7 +821,12 @@ export function Player({
                     if (event.shiftKey) goNext();
                     break;
                 case 'Escape':
-                    if (!document.fullscreenElement && !settingsOpen) onBack();
+                    if (
+                        !document.fullscreenElement &&
+                        !settingsOpen &&
+                        !episodesOpen
+                    )
+                        onBack();
                     break;
                 default:
                     return;
@@ -833,6 +849,7 @@ export function Player({
         poke,
         toggleSubtitles,
         settingsOpen,
+        episodesOpen,
         onBack,
     ]);
 
@@ -889,6 +906,9 @@ export function Player({
         item.type === 'Episode'
             ? [episodeLabel(item), item.name].filter(Boolean).join(' · ')
             : null;
+    const isEpisode = item.type === 'Episode' && item.seriesId !== null;
+    // Название ведёт на страницу фильма или сериала, строка серии — на серию.
+    const titleHref = items.show(isEpisode ? item.seriesId! : item.id);
 
     return (
         <div
@@ -919,7 +939,7 @@ export function Player({
                 onClick={(event) => {
                     container.current?.focus({ preventScroll: true });
                     // Пока видео грузится, клик ничего не ставит на паузу.
-                    if (settingsOpen || !started) return;
+                    if (settingsOpen || episodesOpen || !started) return;
                     if (pointerType.current === 'mouse') togglePlay();
                     else onTap(event.clientX);
                 }}
@@ -1078,14 +1098,23 @@ export function Player({
                 >
                     <ArrowLeft />
                 </ControlButton>
-                <div className="min-w-0 pt-1">
-                    <div className="truncate text-lg font-semibold md:text-xl">
-                        {title}
-                    </div>
+                <div className="flex min-w-0 flex-col items-start pt-1">
+                    <Link
+                        href={titleHref}
+                        title={isEpisode ? 'Страница сериала' : 'Подробнее'}
+                        className="group/title inline-flex max-w-full items-center gap-1 rounded text-lg font-semibold outline-none hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/60 md:text-xl"
+                    >
+                        <span className="truncate">{title}</span>
+                        <ChevronRight className="size-5 shrink-0 text-white/50 transition-transform group-hover/title:translate-x-0.5" />
+                    </Link>
                     {subtitleLine && (
-                        <div className="truncate text-sm text-white/70">
+                        <Link
+                            href={items.show(item.id)}
+                            title="Страница серии"
+                            className="max-w-full truncate rounded text-sm text-white/70 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/60"
+                        >
                             {subtitleLine}
-                        </div>
+                        </Link>
                     )}
                 </div>
             </div>
@@ -1216,14 +1245,28 @@ export function Player({
                                     <Captions />
                                 </ControlButton>
                             )}
+                            {isEpisode && (
+                                <ControlButton
+                                    label="Серии"
+                                    data-episodes-toggle
+                                    aria-expanded={episodesOpen}
+                                    onClick={() => {
+                                        setSettingsOpen(false);
+                                        setEpisodesOpen((open) => !open);
+                                    }}
+                                >
+                                    <ListVideo />
+                                </ControlButton>
+                            )}
                             {source && (
                                 <ControlButton
                                     label="Настройки"
                                     data-settings-toggle
                                     aria-expanded={settingsOpen}
-                                    onClick={() =>
-                                        setSettingsOpen((open) => !open)
-                                    }
+                                    onClick={() => {
+                                        setEpisodesOpen(false);
+                                        setSettingsOpen((open) => !open);
+                                    }}
                                     className={cn(
                                         '[&_svg]:transition-transform',
                                         settingsOpen && '[&_svg]:rotate-45',
@@ -1283,6 +1326,10 @@ export function Player({
                     onSubtitle={selectSubtitle}
                     onClose={() => setSettingsOpen(false)}
                 />
+            )}
+
+            {episodesOpen && (
+                <EpisodesPanel item={item} onClose={closeEpisodes} />
             )}
 
             {resumedAt !== null && started && (

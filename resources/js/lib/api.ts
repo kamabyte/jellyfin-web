@@ -24,23 +24,39 @@ export class ApiError extends Error {
     }
 }
 
-export async function postJson<T = unknown>(
+export function postJson<T = unknown>(
     url: string,
     body: unknown,
     options: { keepalive?: boolean; signal?: AbortSignal } = {},
 ): Promise<T> {
-    const response = await fetch(url, {
+    return send<T>(url, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        ...options,
+    });
+}
+
+export function getJson<T = unknown>(
+    url: string,
+    options: { signal?: AbortSignal } = {},
+): Promise<T> {
+    return send<T>(url, { method: 'GET', ...options });
+}
+
+async function send<T>(
+    url: string,
+    init: Omit<RequestInit, 'headers'> & { headers?: Record<string, string> },
+): Promise<T> {
+    const response = await fetch(url, {
+        ...init,
         headers: {
             Accept: 'application/json',
-            'Content-Type': 'application/json',
             'X-XSRF-TOKEN': xsrfToken(),
             'X-Requested-With': 'XMLHttpRequest',
+            ...init.headers,
         },
-        body: JSON.stringify(body),
         credentials: 'same-origin',
-        keepalive: options.keepalive,
-        signal: options.signal,
     });
 
     if (response.status === 401) {

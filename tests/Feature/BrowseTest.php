@@ -17,7 +17,7 @@ it('renders the home page with the hero, continue watching and next up', functio
             jfItem('movie-2', 'Movie', ['UserData' => ['PlayedPercentage' => 42.5, 'Played' => false]]),
         ])),
         'jellyfin.test/Shows/NextUp*' => Http::response(jfList([
-            jfItem('ep-1', 'Episode', ['SeriesName' => 'Сериал', 'ParentIndexNumber' => 1, 'IndexNumber' => 3]),
+            jfItem('ep-1', 'Episode', ['SeriesId' => 'series-1', 'SeriesName' => 'Сериал', 'ParentIndexNumber' => 1, 'IndexNumber' => 3]),
         ])),
         'jellyfin.test/UserViews*' => Http::response(jfViews()),
     ]);
@@ -30,6 +30,7 @@ it('renders the home page with the hero, continue watching and next up', functio
             ->where('hero.0.backdrop', 'https://media.test/Items/movie-1/Images/Backdrop?tag=bd&maxWidth=1920&quality=90')
             ->where('resume.0.progress', 42.5)
             ->where('nextUp.0.seriesName', 'Сериал')
+            ->where('nextUp.0.seriesId', 'series-1')
             // Музыка — во встроенном клиенте.
             ->where('libraries.3.externalUrl', 'https://media.test/web/#/music?topParentId=lib-music&collectionType=music')
             ->missing('shelves'));
@@ -223,6 +224,19 @@ it('marks items played and favorite', function (): void {
         && str_contains($request->url(), '/UserPlayedItems/movie-1?userId=user-1'));
     Http::assertSent(fn (Request $request) => $request->method() === 'DELETE'
         && str_contains($request->url(), '/UserFavoriteItems/movie-1'));
+});
+
+it('removes an item from continue watching without marking it played', function (): void {
+    Http::fake([
+        'jellyfin.test/UserItems/movie-1/UserData*' => Http::response(['PlaybackPositionTicks' => 0, 'Played' => false]),
+    ]);
+
+    $this->from('/')->delete('/items/movie-1/resume')->assertRedirect('/');
+
+    // Только позиция: отметка «просмотрено» и счётчик остаются как были.
+    Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+        && str_contains($request->url(), '/UserItems/movie-1/UserData?userId=user-1')
+        && $request->data() === ['PlaybackPositionTicks' => 0]);
 });
 
 it('shows a friendly page when Jellyfin is down', function (): void {

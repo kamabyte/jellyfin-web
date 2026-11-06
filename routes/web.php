@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EpisodeController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItemController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\PlaybackController;
 use App\Http\Controllers\PlayedController;
 use App\Http\Controllers\QuickConnectController;
 use App\Http\Controllers\QuickConnectLoginController;
+use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\WatchController;
 use App\Jellyfin\BuiltInClient;
@@ -34,6 +36,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('items/{item}/played', [PlayedController::class, 'store'])->name('items.played.store');
     Route::delete('items/{item}/played', [PlayedController::class, 'destroy'])->name('items.played.destroy');
+    Route::delete('items/{item}/resume', [ResumeController::class, 'destroy'])->name('items.resume.destroy');
     Route::post('items/{item}/favorite', [FavoriteController::class, 'store'])->name('items.favorite.store');
     Route::delete('items/{item}/favorite', [FavoriteController::class, 'destroy'])->name('items.favorite.destroy');
 
@@ -41,6 +44,8 @@ Route::middleware('auth')->group(function () {
     // Плеер: как играть (JSON) и отчёты о просмотре.
     Route::post('watch/{item}/playback', [PlaybackController::class, 'store'])->name('playback.store');
     Route::post('playback/{event}', [PlaybackController::class, 'report'])->name('playback.report');
+    // Панель «Серии» в плеере: сезоны и серии выбранного сезона (JSON).
+    Route::get('series/{series}/episodes', [EpisodeController::class, 'index'])->name('series.episodes');
 
     // Впустить другое устройство по коду Quick Connect.
     Route::get('quick-connect', [QuickConnectController::class, 'show'])->name('quick-connect');

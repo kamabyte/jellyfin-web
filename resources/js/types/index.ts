@@ -5,6 +5,7 @@ export interface Item {
     name: string;
     year: number | null;
     endYear: number | null;
+    seriesId: string | null;
     seriesName: string | null;
     season: number | null;
     episode: number | null;
@@ -57,7 +58,6 @@ export interface ItemDetail extends Item {
     criticRating: number | null;
     premiereDate: string | null;
     status: string | null;
-    seriesId: string | null;
     seasonId: string | null;
     parentId: string | null;
     /** Секунды; null — не начинали. */
