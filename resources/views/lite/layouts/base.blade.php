@@ -14,6 +14,8 @@
         <meta name="format-detection" content="telephone=no">
         <meta name="theme-color" content="#070709">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        {{-- Значок на экране «Домой» в iOS: без него — снимок страницы. --}}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <title>@hasSection('title')@yield('title') · @endif{{ config('app.name') }}</title>
         <link rel="stylesheet" href="{{ Format::asset('lite.css') }}">
     </head>

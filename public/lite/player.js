@@ -46,6 +46,11 @@
         SecondaryAudioNotSupported: 'выбранная дорожка',
     };
 
+    // iPad 4 на iOS 10 на AC-3 и E-AC-3 отвечает canPlayType «да», а
+    // декодировать не может (MEDIA_ERR_DECODE, проверено и в файле, и в HLS).
+    // Не сообщаем их — сервер перепакует с AAC, видео так и копируется.
+    var UNDECODABLE = ['ac3', 'eac3'];
+
     var PROBES = {
         h264: ['video/mp4; codecs="avc1.640029"', 'video/mp4; codecs="avc1.42E01E"'],
         hevc: ['video/mp4; codecs="hvc1.2.4.L153.B0"', 'video/mp4; codecs="hev1.2.4.L153.B0"'],
@@ -290,7 +295,7 @@
         }
         var codecs = [];
         for (var codec in PROBES) {
-            if (find(PROBES[codec], can)) codecs.push(codec);
+            if (UNDECODABLE.indexOf(codec) === -1 && find(PROBES[codec], can)) codecs.push(codec);
         }
         var containers = ['mp4'];
         if (probe.canPlayType('video/webm') !== '') containers.push('webm');

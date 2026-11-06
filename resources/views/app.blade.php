@@ -11,6 +11,8 @@
         </style>
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        {{-- Значок на экране «Домой» в iOS: без него — снимок страницы. --}}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         {{-- Старый браузер (iPad на iOS 10 и т. п.) этот клиент не запустит:
              сборке и Tailwind v4 нужен Safari 16.4+. Ему — облегчённая

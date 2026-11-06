@@ -34,6 +34,7 @@
 }
 
 html {
+    height: 100%;
     background: #070709;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
@@ -1777,6 +1778,8 @@ ul {
 /* ---------- Вход ---------- */
 
 .body--auth {
+    height: 100%;
+    min-height: 0;
     overflow-x: hidden;
 }
 
@@ -1788,7 +1791,8 @@ ul {
     align-items: center;
     -webkit-justify-content: center;
     justify-content: center;
-    min-height: 100vh;
+    /* Не 100vh: в Safari это высота без панелей, и страница прокручивается. */
+    min-height: 100%;
     padding: 48px 16px;
     overflow: hidden;
 }
@@ -1865,15 +1869,20 @@ ul {
 }
 
 .qc__code {
+    /* Флекс, а не строка: пробелы между цифрами в разметке не раздвигают код. */
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
     font-family: Menlo, monospace;
     font-size: 34px;
     font-weight: 600;
-    white-space: nowrap;
 }
 
 .qc__digit {
-    display: inline-block;
-    width: 44px;
+    -webkit-flex: 0 1 44px;
+    flex: 0 1 44px;
+    min-width: 0;
     height: 64px;
     margin: 0 3px;
     border-radius: 12px;
