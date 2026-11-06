@@ -15,7 +15,8 @@
                     <p class="page-lead">Родился(-ась) {{ Format::date($person['premiereDate']) }}</p>
                 @endif
                 @if ($person['overview'])
-                    <button type="button" class="person-head__bio clamp-4" data-expand>{{ $person['overview'] }}</button>
+                    {{-- Не <button>: на кнопке старый WebKit не обрезает строки (line-clamp). --}}
+                    <div class="person-head__bio clamp-4" role="button" tabindex="0" data-expand>{{ $person['overview'] }}</div>
                 @endif
             </div>
         </div>

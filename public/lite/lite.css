@@ -1591,6 +1591,8 @@ ul {
 
 .person-head__bio {
     max-width: 760px;
+    /* Без этого iOS не присылает click по <div>. */
+    cursor: pointer;
     margin-top: 12px;
     color: rgba(255, 255, 255, 0.75);
     font-size: 14px;
