@@ -291,7 +291,12 @@
             } catch (e) {
                 viaMse = false;
             }
-            return viaMse || probe.canPlayType(type) !== '';
+            if (viaMse) return true;
+            var answer = probe.canPlayType(type);
+            // Safari 10 на любой кодек отвечает «maybe», даже на выдуманный:
+            // с параметром codecs верим только «probably», иначе iPad 4
+            // получает AV1 или Opus как есть и не может их проиграть.
+            return type.indexOf('codecs=') === -1 ? answer !== '' : answer === 'probably';
         }
         var codecs = [];
         for (var codec in PROBES) {
