@@ -1,15 +1,26 @@
 {{--
     Кнопки под заголовком: смотреть (или продолжить), с начала, отметки
     «просмотрено» и «избранное», трейлер и ссылки, встроенный клиент.
+    Версии в 4K здесь не проиграть: если есть поменьше — плеер возьмёт её
+    (и об этом строка под кнопками), если нет — кнопка неактивна.
 --}}
 @php
     use App\Lite\Format;
     use App\Lite\Icon;
-    $resumed = $playId === $item['id'] && $item['resumeAt'];
+    use App\Lite\Lite;
+    $own = $playId === $item['id'];
+    $version = $own ? Lite::version($item) : null;
+    $playable = ! $own || $version !== null;
+    $resumed = $own && $playable && $item['resumeAt'];
     $label = $playLabel ?? ($resumed ? 'Продолжить с '.Format::duration($item['resumeAt']) : 'Смотреть');
+    $smaller = $version !== null && $item['sources'] !== [] && $version['id'] !== $item['sources'][0]['id'];
 @endphp
 <div class="actions">
-    <a href="{{ route('watch', $playId) }}" class="btn btn--primary btn--lg">{{ Icon::svg('play', '', fill: true) }} {{ $label }}</a>
+    @if ($playable)
+        <a href="{{ route('watch', $playId) }}" class="btn btn--primary btn--lg">{{ Icon::svg('play', '', fill: true) }} {{ $label }}</a>
+    @else
+        <span class="btn btn--primary btn--lg btn--disabled" aria-disabled="true">{{ Icon::svg('play', '', fill: true) }} Только в 4K</span>
+    @endif
     @if ($resumed)
         <a href="{{ route('watch', ['item' => $item['id'], 't' => 0]) }}" class="round-btn" aria-label="С начала" title="С начала">{{ Icon::svg('rotate-ccw') }}</a>
     @endif
@@ -42,3 +53,8 @@
         </div>
     </div>
 </div>
+@if (! $playable)
+    <p class="detail__note">Есть только в 4K — на этом устройстве не показать: сервер не успевает уменьшать 4K.</p>
+@elseif ($smaller)
+    <p class="detail__note">На этом устройстве — версия {{ App\Http\Resources\ItemDetail::resolution($version['width']) ?? $version['name'] }}: 4K ему не по силам.</p>
+@endif

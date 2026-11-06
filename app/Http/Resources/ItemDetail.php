@@ -44,6 +44,7 @@ class ItemDetail extends ItemCard
             'logo' => Image::of($item, 'Logo', 800),
             'people' => $this->people($item),
             'media' => $this->media($item),
+            'sources' => $this->sources($item),
             'links' => $this->links($item),
             'trailer' => data_get($item, 'RemoteTrailers.0.Url'),
             'builtInUrl' => BuiltInClient::item((string) $item['Id']),
@@ -99,13 +100,7 @@ class ItemDetail extends ItemCard
         $defaultAudio = $audio->firstWhere('IsDefault', true) ?? $audio->first();
 
         return [
-            'resolution' => match (true) {
-                $width >= 3200 => '4K',
-                $width >= 1800 => '1080p',
-                $width >= 1200 => '720p',
-                $width > 0 => 'SD',
-                default => null,
-            },
+            'resolution' => self::resolution($width),
             'hdr' => match (true) {
                 str_starts_with($range, 'DOVI') => 'Dolby Vision',
                 str_starts_with($range, 'HDR10Plus') => 'HDR10+',
@@ -119,6 +114,41 @@ class ItemDetail extends ItemCard
             'container' => data_get($item, 'MediaSources.0.Container'),
             'size' => data_get($item, 'MediaSources.0.Size'),
         ];
+    }
+
+    /** Ширина кадра словами: 3840 → «4K», 1920 → «1080p». */
+    public static function resolution(?int $width): ?string
+    {
+        return match (true) {
+            $width >= 3200 => '4K',
+            $width >= 1800 => '1080p',
+            $width >= 1200 => '720p',
+            $width > 0 => 'SD',
+            default => null,
+        };
+    }
+
+    /**
+     * Версии файла (у фильма их может быть несколько: 4K, 1080p…) — id
+     * источника для плеера, название и ширина кадра.
+     *
+     * @param  array<string, mixed>  $item
+     * @return list<array{id: string, name: string|null, width: int|null}>
+     */
+    private function sources(array $item): array
+    {
+        /** @var list<array{Id?: string, Name?: string, MediaStreams?: list<array<string, mixed>>}> $sources */
+        $sources = $item['MediaSources'] ?? [];
+
+        return array_map(function (array $source) use ($item): array {
+            $video = collect($source['MediaStreams'] ?? [])->firstWhere('Type', 'Video');
+
+            return [
+                'id' => (string) ($source['Id'] ?? $item['Id']),
+                'name' => $source['Name'] ?? null,
+                'width' => isset($video['Width']) ? (int) $video['Width'] : null,
+            ];
+        }, $sources);
     }
 
     /**

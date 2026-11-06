@@ -22,6 +22,10 @@ export interface Item {
     progress: number | null;
     unplayed: number | null;
     childCount: number | null;
+    /** Ширина кадра основной версии, px. */
+    width: number | null;
+    /** Сколько версий у файла (4K, 1080p…). */
+    versions: number;
 }
 
 /** Серия в списке сезона — App\Http\Resources\EpisodeCard. */
@@ -66,6 +70,7 @@ export interface ItemDetail extends Item {
     logo: string | null;
     people: Person[];
     media: MediaInfo | null;
+    sources: { id: string; name: string | null; width: number | null }[];
     links: { label: string; url: string }[];
     trailer: string | null;
     builtInUrl: string;

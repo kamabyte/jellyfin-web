@@ -9,6 +9,9 @@
     $isEpisode = $item['type'] === 'Episode' && $item['seriesId'] !== null;
     $title = $item['type'] === 'Episode' && $item['seriesName'] ? $item['seriesName'] : $item['name'];
     $subtitleLine = $item['type'] === 'Episode' ? implode(' · ', array_filter([Format::episodeLabel($item), $item['name']])) : null;
+    // 4K этот сервер не уменьшает: играем версию поменьше, а если её нет —
+    // вместо плеера объясняем почему.
+    $version = App\Lite\Lite::version($item);
     $config = [
         'item' => [
             'id' => $item['id'],
@@ -19,6 +22,7 @@
             'runtime' => $item['runtime'],
         ],
         'startAt' => $startAt,
+        'mediaSourceId' => $version['id'] ?? null,
         'next' => $next === null ? null : [
             'id' => $next['id'],
             'name' => $next['name'],
@@ -43,6 +47,17 @@
 @section('body-class', 'body--player')
 
 @section('body')
+    @if ($version === null)
+        <div class="player">
+            <div class="player__overlay">
+                <p class="player__overlay-title">Только в 4K</p>
+                <p class="player__overlay-text">«{{ $item['name'] }}» есть только в 4K, а на этом устройстве его не показать: сервер не успевает уменьшать 4K.</p>
+                <div class="actions actions--center">
+                    <a href="{{ $config['urls']['back'] }}" class="btn btn--primary">{{ Icon::svg('arrow-left', 'icon--sm') }} Назад</a>
+                </div>
+            </div>
+        </div>
+    @else
     <div class="player" data-player>
         <video class="player__video" playsinline webkit-playsinline preload="auto"></video>
 
@@ -189,9 +204,12 @@
             @endforeach
         </div>
     </div>
+    @endif
 @endsection
 
-@push('scripts')
-    <script>window.LITE_PLAYER = @json($config);</script>
-    <script src="{{ Format::asset('player.js') }}"></script>
-@endpush
+@if ($version !== null)
+    @push('scripts')
+        <script>window.LITE_PLAYER = @json($config);</script>
+        <script src="{{ Format::asset('player.js') }}"></script>
+    @endpush
+@endif

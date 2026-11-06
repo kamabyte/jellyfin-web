@@ -20,7 +20,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class Jellyfin
 {
     /** Поля, без которых не нарисовать карточку. */
-    public const string CARD_FIELDS = 'PrimaryImageAspectRatio,ProductionYear,EndDate,ChildCount,RecursiveItemCount';
+    public const string CARD_FIELDS = 'PrimaryImageAspectRatio,ProductionYear,EndDate,ChildCount,RecursiveItemCount,Width,MediaSourceCount';
 
     public function __construct(
         private readonly string $url,

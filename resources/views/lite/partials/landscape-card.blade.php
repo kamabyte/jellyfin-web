@@ -1,12 +1,15 @@
 {{--
     Горизонтальная карточка 16:9: «Продолжить просмотр», серии, видео из
     папок. play — сразу в плеер; menu — «⋮» с действиями: 'resume' (можно
-    убрать из «Продолжить просмотр») или 'next' (только отметить).
+    убрать из «Продолжить просмотр») или 'next' (только отметить). Видео
+    только в 4K здесь не проиграть — блёклая карточка ведёт на его страницу.
 --}}
 @php
     use App\Lite\Format;
     use App\Lite\Icon;
-    $play = $play ?? false;
+    use App\Lite\Lite;
+    $tooLarge = Lite::tooLarge($item);
+    $play = ($play ?? false) && ! $tooLarge;
     $menu = $menu ?? null;
     $isEpisode = $item['type'] === 'Episode';
     $title = $isEpisode && $item['seriesName'] ? $item['seriesName'] : $item['name'];
@@ -14,7 +17,7 @@
         ? implode(' · ', array_filter([Format::episodeLabel($item), $item['name']]))
         : (Format::remaining($item) ?: Format::yearRange($item));
 @endphp
-<div class="card card--landscape {{ $menu ? 'card--menu' : '' }} {{ $class ?? '' }}">
+<div class="card card--landscape {{ $menu ? 'card--menu' : '' }} {{ $tooLarge ? 'card--too-large' : '' }} {{ $class ?? '' }}">
     <a href="{{ Format::href($item, $play) }}" class="card__link">
         <div class="card__frame">
             @include('lite.partials.art', ['src' => $item['landscape'] ?? $item['poster'], 'item' => $item, 'ratio' => 'video'])

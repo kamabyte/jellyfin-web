@@ -44,6 +44,10 @@ class ItemCard extends JsonResource
             'progress' => $this->progress($item),
             'unplayed' => data_get($item, 'UserData.UnplayedItemCount'),
             'childCount' => $item['ChildCount'] ?? $item['RecursiveItemCount'] ?? null,
+            // Ширина кадра основной версии и сколько всего версий (Jellyfin
+            // присылает MediaSourceCount, только если их не одна).
+            'width' => isset($item['Width']) ? (int) $item['Width'] : null,
+            'versions' => (int) ($item['MediaSourceCount'] ?? 1),
         ];
     }
 

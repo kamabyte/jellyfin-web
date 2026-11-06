@@ -1,15 +1,24 @@
-{{-- Серии сезона строками: кадр, номер и название, описание, прогресс. --}}
+{{--
+    Серии сезона строками: кадр, номер и название, описание, прогресс. Серия
+    только в 4K — блёклая и ведёт на свою страницу, а не в плеер.
+--}}
 @php
     use App\Lite\Format;
     use App\Lite\Icon;
+    use App\Lite\Lite;
 @endphp
 <ol class="episodes">
     @foreach ($episodes as $episode)
+        @php($tooLarge = Lite::tooLarge($episode))
         <li>
-            <a href="{{ route('watch', $episode['id']) }}" class="episode {{ $episode['id'] === ($currentId ?? null) ? 'episode--current' : '' }}">
+            <a href="{{ $tooLarge ? route('items.show', $episode['id']) : route('watch', $episode['id']) }}" class="episode {{ $episode['id'] === ($currentId ?? null) ? 'episode--current' : '' }} {{ $tooLarge ? 'episode--too-large' : '' }}">
                 <div class="episode__thumb">
                     @include('lite.partials.art', ['src' => $episode['landscape'] ?? $episode['poster'], 'item' => $episode, 'ratio' => 'video'])
-                    <span class="episode__play">{{ Icon::svg('play', 'icon--lg', fill: true) }}</span>
+                    @if ($tooLarge)
+                        <span class="card__flag">4K</span>
+                    @else
+                        <span class="episode__play">{{ Icon::svg('play', 'icon--lg', fill: true) }}</span>
+                    @endif
                     @if ($episode['progress'] !== null)
                         <div class="episode__progress"><div class="card__progress-bar" style="width: {{ $episode['progress'] }}%"></div></div>
                     @endif

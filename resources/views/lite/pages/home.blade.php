@@ -29,7 +29,11 @@
                             <p class="hero__overview">{{ $slide['overview'] }}</p>
                         @endif
                         <div class="actions">
-                            <a href="{{ route('watch', $slide['id']) }}" class="btn btn--primary btn--lg">{{ Icon::svg('play', '', fill: true) }} {{ $slide['resumeAt'] ? 'Продолжить' : 'Смотреть' }}</a>
+                            @if (App\Lite\Lite::tooLarge($slide))
+                                <span class="btn btn--primary btn--lg btn--disabled" aria-disabled="true">{{ Icon::svg('play', '', fill: true) }} Только в 4K</span>
+                            @else
+                                <a href="{{ route('watch', $slide['id']) }}" class="btn btn--primary btn--lg">{{ Icon::svg('play', '', fill: true) }} {{ $slide['resumeAt'] ? 'Продолжить' : 'Смотреть' }}</a>
+                            @endif
                             <a href="{{ route('items.show', $slide['id']) }}" class="btn btn--glass btn--lg">{{ Icon::svg('info') }} Подробнее</a>
                         </div>
                     </div>

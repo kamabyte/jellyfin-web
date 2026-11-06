@@ -122,7 +122,7 @@
     var trickplay = config.trickplay;
 
     var state = {
-        request: { startAt: config.startAt, mediaSourceId: null, audio: null, burn: null, directPlay: true },
+        request: { startAt: config.startAt, mediaSourceId: config.mediaSourceId || null, audio: null, burn: null, directPlay: true },
         requestId: 0,
         source: null,
         nativeAudio: null,

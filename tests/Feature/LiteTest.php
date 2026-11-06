@@ -150,7 +150,7 @@ describe('signed in', function (): void {
                     'Container' => 'mkv',
                     'Size' => 50_000_000_000,
                     'MediaStreams' => [
-                        ['Type' => 'Video', 'Codec' => 'hevc', 'Width' => 3840],
+                        ['Type' => 'Video', 'Codec' => 'hevc', 'Width' => 1920],
                         ['Type' => 'Audio', 'DisplayTitle' => 'Русский - AAC 5.1', 'IsDefault' => true],
                     ],
                 ]],
@@ -167,6 +167,81 @@ describe('signed in', function (): void {
             ->assertSee('Нео')
             ->assertSee('Похожий')
             ->assertSee('MKV · 46,6 ГБ');
+    });
+
+    it('greys out videos that exist only in 4K', function (): void {
+        Http::fake([
+            'jellyfin.test/Items/lib-movies*' => Http::response(jfItem('lib-movies', 'CollectionFolder', ['CollectionType' => 'movies', 'Name' => 'Фильмы'])),
+            'jellyfin.test/Items?*' => Http::response(jfList([
+                jfItem('movie-4k', 'Movie', ['Name' => 'Только 4K', 'Width' => 3840]),
+                jfItem('movie-both', 'Movie', ['Name' => 'Две версии', 'Width' => 3840, 'MediaSourceCount' => 2]),
+                jfItem('movie-hd', 'Movie', ['Name' => 'Обычный', 'Width' => 1920]),
+            ])),
+            'jellyfin.test/Genres*' => Http::response(jfList([])),
+            'jellyfin.test/UserViews*' => Http::response(jfViews()),
+        ]);
+
+        $response = lite()->get('/libraries/lib-movies')->assertOk();
+
+        // Блёклая — только та, у которой нет версии поменьше.
+        expect(substr_count($response->getContent() ?: '', 'card--too-large'))->toBe(1);
+        $response->assertSeeInOrder(['card--too-large', 'card__flag', 'Только 4K', 'Две версии'], false);
+    });
+
+    it('offers no play button for a movie that exists only in 4K', function (): void {
+        Http::fake([
+            'jellyfin.test/Items/movie-1/Similar*' => Http::response(jfList([])),
+            'jellyfin.test/Items/movie-1*' => Http::response(jfItem('movie-1', 'Movie', [
+                'MediaSources' => [['Id' => 'movie-1', 'MediaStreams' => [['Type' => 'Video', 'Width' => 3840]]]],
+            ])),
+            'jellyfin.test/UserViews*' => Http::response(jfViews()),
+        ]);
+
+        lite()->get('/items/movie-1')
+            ->assertOk()
+            ->assertSee('Только в 4K')
+            ->assertSee('Есть только в 4K')
+            ->assertDontSee('href="'.route('watch', 'movie-1').'"', false);
+    });
+
+    it('plays the smaller version of a movie that also exists in 4K', function (): void {
+        $movie = jfItem('movie-1', 'Movie', [
+            'MediaSources' => [
+                ['Id' => 'movie-1', 'Name' => '2160p', 'MediaStreams' => [['Type' => 'Video', 'Width' => 3840]]],
+                ['Id' => 'version-720', 'Name' => '720p', 'MediaStreams' => [['Type' => 'Video', 'Width' => 1280]]],
+            ],
+        ]);
+        Http::fake([
+            'jellyfin.test/Items/movie-1/Similar*' => Http::response(jfList([])),
+            'jellyfin.test/Items/movie-1*' => Http::response($movie),
+            'jellyfin.test/MediaSegments/*' => Http::response(jfList([])),
+            'jellyfin.test/UserViews*' => Http::response(jfViews()),
+        ]);
+
+        lite()->get('/items/movie-1')
+            ->assertOk()
+            ->assertSee('href="'.route('watch', 'movie-1').'"', false)
+            ->assertSee('На этом устройстве — версия 720p');
+
+        lite()->get('/watch/movie-1')
+            ->assertOk()
+            ->assertSee('"mediaSourceId":"version-720"', false);
+    });
+
+    it('explains instead of opening the player for a 4K-only movie', function (): void {
+        Http::fake([
+            'jellyfin.test/Items/movie-1*' => Http::response(jfItem('movie-1', 'Movie', [
+                'Name' => 'Дюна',
+                'MediaSources' => [['Id' => 'movie-1', 'MediaStreams' => [['Type' => 'Video', 'Width' => 3840]]]],
+            ])),
+            'jellyfin.test/MediaSegments/*' => Http::response(jfList([])),
+            'jellyfin.test/UserViews*' => Http::response(jfViews()),
+        ]);
+
+        lite()->get('/watch/movie-1')
+            ->assertOk()
+            ->assertSee('«Дюна» есть только в 4K')
+            ->assertDontSee('/lite/player.js', false);
     });
 
     it('opens the player with everything player.js needs', function (): void {

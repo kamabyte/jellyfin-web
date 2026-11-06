@@ -1,3 +1,6 @@
+@if (App\Lite\Lite::tooLarge($item))
+    <span class="card__flag">4K</span>
+@endif
 @if ($item['played'])
     <span class="card__badge" aria-label="Просмотрено">{{ App\Lite\Icon::svg('check', 'icon--xs icon--bold') }}</span>
 @elseif ($item['unplayed'])
