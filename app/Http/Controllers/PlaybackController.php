@@ -26,7 +26,7 @@ class PlaybackController extends Controller
         $user = $request->user();
         $maxBitrate = (int) config('jellyfin.max_bitrate');
 
-        $info = $jellyfin->playbackInfo($item, array_filter([
+        $params = array_filter([
             'DeviceProfile' => DeviceProfile::build(
                 $request->codecs(),
                 $request->containers(),
@@ -52,7 +52,17 @@ class PlaybackController extends Controller
             'AllowVideoStreamCopy' => true,
             'AllowAudioStreamCopy' => true,
             'AutoOpenLiveStream' => true,
-        ], fn ($value) => $value !== null));
+        ], fn ($value) => $value !== null);
+
+        $info = $jellyfin->playbackInfo($item, $params);
+
+        // Файл со многими дорожками звука старый iPad открывает долго: индекс
+        // в начале файла описывает их все (у фильма с 12 дорожками — 20 МБ), и
+        // его надо скачать и разобрать до первого кадра. Перепакованный HLS
+        // несёт одну выбранную дорожку, видео копируется.
+        if ($request->singleAudio() && self::directPlaysSeveralAudioTracks($info)) {
+            $info = $jellyfin->playbackInfo($item, ['EnableDirectPlay' => false] + $params);
+        }
 
         try {
             $source = PlaybackSource::fromPlaybackInfo($item, $info, $user->token, $user->deviceId, $request->burnSubtitleIndex());
@@ -75,6 +85,7 @@ class PlaybackController extends Controller
                     'audio' => $request->audioStreamIndex(),
                     'burnSubtitle' => $request->burnSubtitleIndex(),
                     'maxWidth' => $request->maxWidth(),
+                    'singleAudio' => $request->singleAudio(),
                     'userAgent' => $request->userAgent(),
                 ],
             ]);
@@ -88,6 +99,20 @@ class PlaybackController extends Controller
         $jellyfin->reportPlayback($event, $request->body());
 
         return response()->noContent();
+    }
+
+    /**
+     * @param  array<string, mixed>  $info  ответ /Items/{id}/PlaybackInfo
+     */
+    private static function directPlaysSeveralAudioTracks(array $info): bool
+    {
+        /** @var array<string, mixed> $source */
+        $source = data_get($info, 'MediaSources.0', []);
+        /** @var list<array<string, mixed>> $streams */
+        $streams = $source['MediaStreams'] ?? [];
+
+        return ($source['SupportsDirectPlay'] ?? false)
+            && count(array_filter($streams, fn (array $stream): bool => ($stream['Type'] ?? null) === 'Audio')) > 1;
     }
 
     private function reason(string $code): string

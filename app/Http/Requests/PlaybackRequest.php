@@ -26,6 +26,7 @@ class PlaybackRequest extends FormRequest
             'directPlay' => ['boolean'],
             'audioTrackSwitching' => ['boolean'],
             'maxWidth' => ['nullable', 'integer', 'min:320', 'max:8192'],
+            'singleAudio' => ['boolean'],
             'startAt' => ['nullable', 'numeric', 'min:0'],
             'mediaSourceId' => ['nullable', 'string', 'max:64'],
             'audioStreamIndex' => ['nullable', 'integer', 'min:0'],
@@ -85,6 +86,15 @@ class PlaybackRequest extends FormRequest
     public function maxWidth(): ?int
     {
         return $this->filled('maxWidth') ? $this->integer('maxWidth') : null;
+    }
+
+    /**
+     * Файл с несколькими дорожками звука — не как есть, а перепаковкой с
+     * одной (облегчённая версия: старому iPad долго разбирать такой файл).
+     */
+    public function singleAudio(): bool
+    {
+        return $this->boolean('singleAudio');
     }
 
     public function startAt(): float

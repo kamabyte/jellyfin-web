@@ -301,6 +301,9 @@
             dolbyVision: can('video/mp4; codecs="dvh1.05.06"'),
             audioTrackSwitching: 'audioTracks' in video,
             maxWidth: MAX_WIDTH,
+            // Файл со многими дорожками звука — перепаковкой с одной: индекс
+            // такого файла старый iPad скачивает и разбирает секунды.
+            singleAudio: true,
         };
     }
 

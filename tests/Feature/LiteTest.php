@@ -207,6 +207,48 @@ describe('signed in', function (): void {
             ], $request->data()['DeviceProfile']['CodecProfiles'], true));
     });
 
+    it('remuxes a file with several audio tracks so the old iPad gets only one', function (): void {
+        $streams = [
+            ['Type' => 'Video', 'Index' => 0, 'Codec' => 'h264'],
+            ['Type' => 'Audio', 'Index' => 1, 'Codec' => 'aac'],
+            ['Type' => 'Audio', 'Index' => 2, 'Codec' => 'aac'],
+        ];
+        Http::fake(['jellyfin.test/Items/movie-1/PlaybackInfo' => Http::sequence()
+            ->push(['PlaySessionId' => 'session-1', 'MediaSources' => [['Id' => 'movie-1', 'SupportsDirectPlay' => true, 'MediaStreams' => $streams]]])
+            ->push(['PlaySessionId' => 'session-2', 'MediaSources' => [[
+                'Id' => 'movie-1',
+                'SupportsDirectPlay' => false,
+                'TranscodingUrl' => '/videos/movie-1/master.m3u8?AudioStreamIndex=1&TranscodeReasons=DirectPlayError',
+                'MediaStreams' => $streams,
+            ]]]),
+        ]);
+
+        $this->postJson('/watch/movie-1/playback', ['codecs' => ['h264', 'aac'], 'singleAudio' => true])
+            ->assertOk()
+            ->assertJsonPath('method', 'Transcode')
+            ->assertJsonPath('playSessionId', 'session-2')
+            ->assertJsonPath('audioIndex', 1);
+
+        Http::assertSentCount(2);
+        Http::assertSent(fn (Request $request) => ($request->data()['EnableDirectPlay'] ?? null) === false);
+    });
+
+    it('plays a file with one audio track as is', function (): void {
+        Http::fake(['jellyfin.test/Items/movie-1/PlaybackInfo' => Http::response([
+            'PlaySessionId' => 'session-1',
+            'MediaSources' => [['Id' => 'movie-1', 'SupportsDirectPlay' => true, 'MediaStreams' => [
+                ['Type' => 'Video', 'Index' => 0, 'Codec' => 'h264'],
+                ['Type' => 'Audio', 'Index' => 1, 'Codec' => 'aac'],
+            ]]],
+        ])]);
+
+        $this->postJson('/watch/movie-1/playback', ['codecs' => ['h264', 'aac'], 'singleAudio' => true])
+            ->assertOk()
+            ->assertJsonPath('method', 'DirectPlay');
+
+        Http::assertSentCount(1);
+    });
+
     it('searches and shows a person', function (): void {
         Http::fake([
             'jellyfin.test/Items/p-1*' => Http::response(jfItem('p-1', 'Person', ['Name' => 'Киану Ривз', 'IsFolder' => false, 'Overview' => 'Актёр'])),
